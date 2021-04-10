@@ -10,8 +10,11 @@ class Tensor:
     def __init__(self, data, requires_grad=False):
         self.data = np.asarray(data)
         self.requires_grad = requires_grad
+        if self.data.dtype == np.int and self.requires_grad:
+            raise RuntimeError('Only Tensors of floating point and complex dtype can require gradients')
         self.grad_node = []
         self.grad = None
+        self.is_leaf = True
 
     def __repr__(self):
         s = 'tensor({}'.format(self.data)
@@ -36,6 +39,7 @@ class Tensor:
     def reshape(self, *shape):
         old_shape = self.data.shape
         t = Tensor(self.data.reshape(shape), self.requires_grad)
+        t.is_leaf = False
         if self.requires_grad:
             def ViewBackward(grad):
                 grad = grad.reshape(old_shape)
@@ -60,12 +64,15 @@ class Tensor:
             else:
                 node.tensor.grad += node.grad_fn(self.grad)
             node.tensor.backward()
+            if not node.tensor.is_leaf:
+                node.tensor.grad = None
 
     def __add__(self, other):
         other = Tensor.astensor(other)
         data = self.data + other.data
         requires_grad = self.requires_grad or other.requires_grad
         t = Tensor(data, requires_grad)
+        t.is_leaf = False
 
         if self.requires_grad:
             def AddBackward(grad):
@@ -117,6 +124,7 @@ class Tensor:
         data = - self.data
         requires_grad = self.requires_grad
         t = Tensor(data, requires_grad)
+        t.is_leaf = False
 
         if requires_grad:
             def NegBackward(grad):
@@ -130,6 +138,7 @@ class Tensor:
         data = self.data * other.data
         requires_grad = self.requires_grad or other.requires_grad
         t = Tensor(data, requires_grad)
+        t.is_leaf = False
 
         if requires_grad:
             def MulBackward(grad):
@@ -172,6 +181,7 @@ class Tensor:
         data = self.data / other.data
         requires_grad = self.requires_grad or other.requires_grad
         t = Tensor(data, requires_grad)
+        t.is_leaf = False
 
         if self.requires_grad:
             def DivBackward(grad):
@@ -210,12 +220,27 @@ class Tensor:
         data = self.data.sum(axis=dim, keepdims=keepdim)
         requires_grad = self.requires_grad
         t = Tensor(data, requires_grad)
+        t.is_leaf = False
 
         if self.requires_grad:
             def SumBackward(grad):
                 grad = grad * np.ones_like(self.data)
                 return grad
             t.grad_node.append(GRAD_NODE_FMT(self, SumBackward))
+
+        return t
+
+    def mean(self, dim=None, keepdim=False):
+        data = self.data.mean(axis=dim, keepdims=keepdim)
+        requires_grad = self.requires_grad
+        t = Tensor(data, requires_grad)
+        t.is_leaf = False
+
+        if self.requires_grad:
+            def MeanBackward(grad):
+                grad = grad * np.ones_like(self.data) / (self.data.reshape(-1).shape[0] / data.reshape(-1).shape[0])
+                return grad
+            t.grad_node.append(GRAD_NODE_FMT(self, MeanBackward))
 
         return t
 
@@ -229,6 +254,7 @@ class Tensor:
         data = self.data @ other.data
         requires_grad = self.requires_grad or other.requires_grad
         t = Tensor(data, requires_grad)
+        t.is_leaf = False
 
         if self.requires_grad:
             def DotBackward(grad):
@@ -248,8 +274,53 @@ class Tensor:
 
         return t
 
+    def tanh(self):
+        data = np.tanh(self.data)
+        requires_grad = self.requires_grad
+        t = Tensor(data, requires_grad)
+        t.is_leaf = False
+
+        if self.requires_grad:
+            def TanhBackward(grad):
+                return grad * (1 - np.tanh(self.data)**2)
+            t.grad_node.append(GRAD_NODE_FMT(self, TanhBackward))
+
+        return t
+
+    def relu(self):
+        data = np.maximum(0, self.data)
+        requires_grad = self.requires_grad
+        t = Tensor(data, requires_grad)
+        t.is_leaf = False
+
+        if self.requires_grad:
+            def ReluBackward(grad):
+                relu_prime = np.zeros_like(self.data)
+                relu_prime[self.data > 0] = 1
+                return grad * relu_prime
+            t.grad_node.append(GRAD_NODE_FMT(self, ReluBackward))
+
+        return t
+
+    def pow(self, n):
+        data = np.power(self.data, n)
+        requires_grad = self.requires_grad
+        t = Tensor(data, requires_grad)
+        t.is_leaf = False
+
+        if self.requires_grad:
+            def PowBackward(grad):
+                return grad * (n * np.power(self.data, n-1))
+            t.grad_node.append(GRAD_NODE_FMT(self, PowBackward))
+
+        return t
+
     @staticmethod
     def astensor(data):
         if not isinstance(data, Tensor):
             data = Tensor(data)
         return data
+
+
+def random(*shape, requires_grad=True):
+    return Tensor(np.random.rand(*shape), requires_grad)
