@@ -112,22 +112,31 @@ class TestTensor(unittest.TestCase):
             return leaves
         self.run_test_case(case2)
 
-        # def case3(tensor):
-        #     a = tensor([1., 2.], requires_grad=True)
-        #     b = tensor([3., 4.], requires_grad=True)
-        #     leaves = [a, b]
-        #     c = a @ b + b
-        #     print(c)
-        #     c = c.sum()
-        #     c.backward()
-        #     return leaves
-        # self.run_test_case(case3)
+        def case3(tensor):
+            a = tensor([1., 2.], requires_grad=True)
+            b = tensor([3., 4.], requires_grad=True)
+            leaves = [a, b]
+            c = a @ b + b
+            c = c.sum()
+            c.backward()
+            return leaves
+        self.run_test_case(case3)
+
+        def case4(tensor):
+            a = tensor([1.], requires_grad=True)
+            b = tensor([3.], requires_grad=True)
+            leaves = [a, b]
+            c = a @ b + b
+            c = c.sum()
+            c.backward()
+            return leaves
+        self.run_test_case(case4)
 
     def test_reshape(self):
         a = Tensor([1, 2])
         b = a.reshape(2, 1)
         a[0] = 10
-        self.assertTrue(a[0] == b[0][0])
+        self.assertTrue(a.data[0], b.data[0][0])
 
         def case1(tensor):
             a = tensor([[1.], [2.]], requires_grad=True)
@@ -173,7 +182,8 @@ class TestTensor(unittest.TestCase):
             return leaves
         self.run_test_case(case_relu)
 
-        def test_pow(tensor):
+    def test_pow(self):
+        def case(tensor):
             a = tensor([1., 2.], requires_grad=True)
             b = tensor([3., 4.], requires_grad=True)
             c = tensor([[5., 6.], [7., 8.]], requires_grad=True)
@@ -187,8 +197,21 @@ class TestTensor(unittest.TestCase):
             leaves = list(filter(lambda x: x.grad is not None, leaves))
 
             return leaves
+        self.run_test_case(case)
 
-        self.run_test_case(test_pow)
+    def test_select(self):
+        def case(tensor):
+            a = tensor([1., 2.], requires_grad=True)
+            b = tensor([3., 4.], requires_grad=True)
+            c = tensor([[5., 6.], [7., 8.]], requires_grad=True)
+            leaves = [a, b, c]
+            d = a + b + c[0]
+            d = d.mean()
+            d.backward()
+            leaves = list(filter(lambda x: x.grad is not None, leaves))
+
+            return leaves
+        self.run_test_case(case)
 
 
 if __name__ == '__main__':

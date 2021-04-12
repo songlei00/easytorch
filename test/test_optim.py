@@ -3,13 +3,14 @@ sys.path.append('..')
 
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from easytorch import tensor, optim
 
 
 def generate_data(n=100, f=lambda x: 2 * x - 1):
     data = []
     for _ in range(n):
-        x = np.random.rand(3)
+        x = np.random.uniform(-3, 3, 3)
         y = f(x) + 0.01 * np.random.randn()
         data.append([x, y])
     return data
@@ -24,15 +25,15 @@ def sgd_linear_approximation():
     opt = optim.SGD([w, b], lr=0.01)
     loss_list = []
 
-    for _ in range(2000):
-        pred = x @ w + b
-        loss = ((pred - y) * (pred - y)).mean()
-        loss_list.append(loss.data)
-        opt.zero_grad()
-        loss.backward()
-        opt.step()
+    for _ in tqdm(range(1000)):
+        for data_x, data_y in zip(x, y):
+            pred = data_x @ w + b
+            loss = ((pred - data_y) * (pred - data_y)).mean()
+            loss_list.append(loss.data)
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
 
-    print(loss_list[-1])
     plt.plot(loss_list)
     plt.show()
 

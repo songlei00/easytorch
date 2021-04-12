@@ -1,5 +1,6 @@
 import numpy as np
 from collections import namedtuple
+import easytorch.functional as F
 
 
 GRAD_NODE_FMT = namedtuple('grad_node', ['tensor', 'grad_fn'])
@@ -27,7 +28,19 @@ class Tensor:
         return s
 
     def __getitem__(self, item):
-        return self.data[item]
+        data = self.data[item]
+        requires_grad = self.requires_grad
+        t = Tensor(data, requires_grad)
+        t.is_leaf = False
+
+        if self.requires_grad:
+            def SelectBackward(grad):
+                next_grad = np.zeros_like(self.data)
+                next_grad[item] = grad
+                return next_grad
+            t.grad_node.append(GRAD_NODE_FMT(self, SelectBackward))
+
+        return t
 
     def __setitem__(self, key, value):
         self.data[key] = value
@@ -36,10 +49,15 @@ class Tensor:
     def shape(self):
         return self.data.shape
 
+    @property
+    def T(self):
+        raise NotImplementedError('Transpose is not implemented')
+
     def reshape(self, *shape):
         old_shape = self.data.shape
         t = Tensor(self.data.reshape(shape), self.requires_grad)
         t.is_leaf = False
+
         if self.requires_grad:
             def ViewBackward(grad):
                 grad = grad.reshape(old_shape)
@@ -247,9 +265,10 @@ class Tensor:
     def __matmul__(self, other):
         other = Tensor.astensor(other)
 
-        if self.data.ndim == 1 and other.data.ndim == 1:
-            # TODO: fix this bug
-            raise NotImplementedError('Special case for mul')
+        if self.data.ndim == 1:
+            self = self.reshape(1, -1)
+        if other.data.ndim == 1:
+            other = other.reshape(-1, 1)
 
         data = self.data @ other.data
         requires_grad = self.requires_grad or other.requires_grad
@@ -275,32 +294,10 @@ class Tensor:
         return t
 
     def tanh(self):
-        data = np.tanh(self.data)
-        requires_grad = self.requires_grad
-        t = Tensor(data, requires_grad)
-        t.is_leaf = False
-
-        if self.requires_grad:
-            def TanhBackward(grad):
-                return grad * (1 - np.tanh(self.data)**2)
-            t.grad_node.append(GRAD_NODE_FMT(self, TanhBackward))
-
-        return t
+        return F.tanh(self)
 
     def relu(self):
-        data = np.maximum(0, self.data)
-        requires_grad = self.requires_grad
-        t = Tensor(data, requires_grad)
-        t.is_leaf = False
-
-        if self.requires_grad:
-            def ReluBackward(grad):
-                relu_prime = np.zeros_like(self.data)
-                relu_prime[self.data > 0] = 1
-                return grad * relu_prime
-            t.grad_node.append(GRAD_NODE_FMT(self, ReluBackward))
-
-        return t
+        return F.relu(self)
 
     def pow(self, n):
         data = np.power(self.data, n)
