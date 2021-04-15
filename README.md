@@ -8,7 +8,9 @@
 
 [2. 优化器实现](./doc/2优化器.md)
 
-[3. layer的实现](./doc/3layer的实现.md)
+[3. 损失函数](./doc/3损失函数.md)
+
+[4. layer的实现](./doc/3layer的实现.md)
 
 ## 2 Quick Start
 
@@ -35,13 +37,12 @@ for epoch in range(epochs):
     opt.step()
 ```
 
-### 2.1 拟合曲线
+## 3 Example
 
-代码见```test/test_layer.py```，结果如下：
+1. [近似三角函数](./example/FunctionApproximation.ipynb)
+2. [波士顿房价预测](./example/Predict.ipynb)
 
-<img src='./imgs/img1.png' width=300>
-
-## 3 TODO
+## 4 TODO
 
 1. 优化layer的实现逻辑。
 2. 增加复杂的层，例如Convolutional layer、Dropout、BN。
