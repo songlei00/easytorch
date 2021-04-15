@@ -39,8 +39,8 @@ for epoch in range(epochs):
 
 ## 3 Example
 
-1. [近似三角函数](./example/FunctionApproximation.ipynb)
-2. [波士顿房价预测](./example/Predict.ipynb)
+1. [使用神经网络近似三角函数](./example/FunctionApproximation.ipynb)
+2. [使用神经网络预测波士顿房价](./example/Predict.ipynb)
 
 ## 4 TODO
 
