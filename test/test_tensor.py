@@ -213,6 +213,21 @@ class TestTensor(unittest.TestCase):
             return leaves
         self.run_test_case(case)
 
+    def test_softmax(self):
+        def case(tensor):
+            a = tensor([1., 2., 3.], requires_grad=True)
+            leaves = [a]
+            b = a.softmax(dim=0)
+            b = b.mean()
+            print('b', b)
+            b.backward()
+            leaves = list(filter(lambda x: x.grad is not None, leaves))
+            print_leaves(leaves)
+
+            return leaves
+
+        self.run_test_case(case)
+
 
 if __name__ == '__main__':
     unittest.main()

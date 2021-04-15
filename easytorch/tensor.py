@@ -45,6 +45,9 @@ class Tensor:
     def __setitem__(self, key, value):
         self.data[key] = value
 
+    def __len__(self):
+        return len(self.data)
+
     @property
     def shape(self):
         return self.data.shape
@@ -311,6 +314,9 @@ class Tensor:
             t.grad_node.append(GRAD_NODE_FMT(self, PowBackward))
 
         return t
+
+    def softmax(self, dim=0):
+        return F.softmax(self, dim)
 
     @staticmethod
     def astensor(data):
