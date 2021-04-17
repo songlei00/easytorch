@@ -213,19 +213,32 @@ class TestTensor(unittest.TestCase):
             return leaves
         self.run_test_case(case)
 
-    def test_softmax(self):
+    # def test_softmax(self):
+    #     def case(tensor):
+    #         a = tensor([1., 2., 3.], requires_grad=True)
+    #         leaves = [a]
+    #         b = a.softmax(dim=0)
+    #         b = b.mean()
+    #         print('b', b)
+    #         b.backward()
+    #         leaves = list(filter(lambda x: x.grad is not None, leaves))
+    #         print_leaves(leaves)
+    #
+    #         return leaves
+    #
+    #     self.run_test_case(case)
+
+    def test_abs(self):
         def case(tensor):
-            a = tensor([1., 2., 3.], requires_grad=True)
-            leaves = [a]
-            b = a.softmax(dim=0)
-            b = b.mean()
-            print('b', b)
-            b.backward()
+            a = tensor([1., 2., 0., -10, -20], requires_grad=True)
+            b = tensor([-2., 4., 0., 0, -20], requires_grad=True)
+            leaves = [a, b]
+            c = (a + b).abs()
+            c = c.sum()
+            c.backward()
             leaves = list(filter(lambda x: x.grad is not None, leaves))
-            print_leaves(leaves)
 
             return leaves
-
         self.run_test_case(case)
 
 

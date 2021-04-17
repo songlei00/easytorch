@@ -318,6 +318,20 @@ class Tensor:
     def softmax(self, dim=0):
         return F.softmax(self, dim)
 
+    def abs(self):
+        data = np.abs(self.data)
+        requires_grad = self.requires_grad
+        t = Tensor(data, requires_grad)
+        t.is_leaf = False
+
+        if self.requires_grad:
+            def AbsBackward(grad):
+                assert grad.shape == self.data.shape, 'AbsBackward, grad.shape != data.shape'
+                return grad * np.sign(self.data)
+            t.grad_node.append(GRAD_NODE_FMT(self, AbsBackward))
+
+        return t
+
     @staticmethod
     def astensor(data):
         if not isinstance(data, Tensor):

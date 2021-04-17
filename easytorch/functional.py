@@ -73,3 +73,10 @@ def mse_loss(target_y, y):
         warnings.warn('mse_loss, target size {} is different from input size {}, '
                       'this will likely lead to incorrect results due to broadcasting'.format(target_y.shape, y.shape))
     return ((y - target_y) * (y - target_y)).mean()
+
+
+def l1_loss(target_y, y):
+    if y.shape != target_y.shape:
+        warnings.warn('mse_loss, target size {} is different from input size {}, '
+                      'this will likely lead to incorrect results due to broadcasting'.format(target_y.shape, y.shape))
+    return (y - target_y).abs().mean()

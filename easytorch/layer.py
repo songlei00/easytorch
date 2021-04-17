@@ -42,7 +42,7 @@ class Linear(Layer):
 
 class Sequential(Layer):
 
-    def __init__(self, layers):
+    def __init__(self, *layers):
         super(Sequential, self).__init__()
         self.layers = layers
         for layer in layers:

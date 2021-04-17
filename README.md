@@ -10,7 +10,7 @@
 
 [3. 损失函数](./doc/3损失函数.md)
 
-[4. layer的实现](./doc/3layer的实现.md)
+[4. layer的实现](./doc/4layer的实现.md)
 
 ## 2 Quick Start
 
@@ -20,12 +20,12 @@ from easytorch.optim import SGD
 import easytorch.functional as F
 
 # Create a model, optimizer, loss function
-model = Sequential([
+model = Sequential(
     Linear(1, 5),
     Tanh(),
     Linear(5, 1)
-])
-opt = SGD(model.parameters(), lr=3e-3)
+)
+opt = SGD(model.parameters(), lr=3e-4)
 loss_fn = F.mse_loss
 
 # train the model
@@ -41,11 +41,3 @@ for epoch in range(epochs):
 
 1. [使用神经网络近似三角函数](./example/FunctionApproximation.ipynb)
 2. [使用神经网络预测波士顿房价](./example/Predict.ipynb)
-
-## 4 TODO
-
-1. 优化layer的实现逻辑。
-2. 增加复杂的层，例如Convolutional layer、Dropout、BN。
-3. 增加优化器，例如Adam、RMSprop。
-4. 增加通过Batch优化。
-5. 加速运行。。。虽然是toy，但实在有点慢。。。
